@@ -30,6 +30,9 @@ class DatabaseCursor:
     def fetchall(self):
         return [DatabaseRow(row) for row in self.cursor.fetchall()]
 
+    def __iter__(self):
+        return iter(self.fetchall())
+
 
 class DatabaseConnection:
     def __init__(self, connection, is_postgres: bool):
