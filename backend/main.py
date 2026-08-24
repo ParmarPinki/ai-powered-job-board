@@ -266,7 +266,7 @@ def get_filter_options():
             row[0]
             for row in connection.execute(
                 "SELECT DISTINCT COALESCE(NULLIF(ai_experience, ''), experience_label) "
-                "FROM jobs ORDER BY min_experience, max_experience"
+                "FROM jobs ORDER BY 1"
             )
         ]
 
