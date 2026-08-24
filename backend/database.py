@@ -31,7 +31,7 @@ class DatabaseCursor:
         return [DatabaseRow(row) for row in self.cursor.fetchall()]
 
     def __iter__(self):
-        return iter(self.fetchall())
+        return (DatabaseRow(row) for row in self.cursor)
 
 
 class DatabaseConnection:

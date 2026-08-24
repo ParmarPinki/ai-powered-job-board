@@ -1,6 +1,7 @@
 import json
 import os
 from contextlib import asynccontextmanager
+from heapq import heappush, heapreplace
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -298,46 +299,61 @@ def get_job_stats():
 def get_recommendations(request: RecommendationRequest):
     resume_skills = canonicalize_skills(request.resume_skills)
     normalized_resume_skills = set(resume_skills)
+    top_recommendations: list[tuple[tuple[int, int, int], int, RecommendedJob]] = []
+    sequence = 0
 
     with get_connection() as connection:
-        rows = connection.execute("SELECT * FROM jobs").fetchall()
+        rows = connection.execute("SELECT * FROM jobs")
+        for row in rows:
+            skills_json = row["ai_skills_json"] or row["skills_json"]
+            job_skills = canonicalize_skills(json.loads(skills_json))
+            if not job_skills:
+                continue
 
-    recommendations: list[RecommendedJob] = []
-    for row in rows:
-        job = row_to_job(row)
-        job_skills = canonicalize_skills(job.skills)
-        matching_skills = [skill for skill in job_skills if skill in normalized_resume_skills]
-        if not matching_skills:
-            continue
+            matching_skills = [skill for skill in job_skills if skill in normalized_resume_skills]
+            if not matching_skills:
+                continue
 
-        skill_coverage = round((len(matching_skills) / len(job_skills)) * 100)
-        skill_depth_bonus = min(len(matching_skills) / 5, 1) * 15
-        role_bonus = 10 if title_matches_resume_roles(job.title, request.resume_roles) else 0
-        experience_bonus = (
-            5
-            if request.experience_years is not None
-            and (job.min_experience is None or job.min_experience <= request.experience_years)
-            else 0
-        )
-        recommendation_score = round(skill_coverage * 0.7 + skill_depth_bonus + role_bonus + experience_bonus)
-        job_payload = job.model_dump()
-        job_payload["skills"] = job_skills
-        recommendations.append(
-            RecommendedJob(
+            skill_coverage = round((len(matching_skills) / len(job_skills)) * 100)
+            skill_depth_bonus = min(len(matching_skills) / 5, 1) * 15
+            role_bonus = 10 if title_matches_resume_roles(row["title"], request.resume_roles) else 0
+            experience_bonus = (
+                5
+                if request.experience_years is not None
+                and (row["min_experience"] is None or row["min_experience"] <= request.experience_years)
+                else 0
+            )
+            recommendation_score = round(
+                skill_coverage * 0.7 + skill_depth_bonus + role_bonus + experience_bonus
+            )
+            rank = (recommendation_score, skill_coverage, len(matching_skills))
+
+            if len(top_recommendations) >= request.limit and rank <= top_recommendations[0][0]:
+                continue
+
+            job = row_to_job(row)
+            job_payload = job.model_dump()
+            job_payload["skills"] = job_skills
+            recommendation = RecommendedJob(
                 **job_payload,
                 matching_skills=matching_skills,
                 skill_coverage=skill_coverage,
                 recommendation_score=recommendation_score,
             )
-        )
+            entry = (rank, sequence, recommendation)
+            sequence += 1
+            if len(top_recommendations) < request.limit:
+                heappush(top_recommendations, entry)
+            else:
+                heapreplace(top_recommendations, entry)
 
-    recommendations.sort(
-        key=lambda job: (job.recommendation_score, job.skill_coverage, len(job.matching_skills)),
-        reverse=True,
-    )
+    recommendations = [
+        entry[2]
+        for entry in sorted(top_recommendations, key=lambda entry: entry[0], reverse=True)
+    ]
     return RecommendationResponse(
         resume_skills=resume_skills,
-        items=recommendations[: request.limit],
+        items=recommendations,
     )
 
 
