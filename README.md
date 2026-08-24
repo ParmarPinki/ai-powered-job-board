@@ -2,7 +2,7 @@
 
 - **Live prototype:** [https://ai-powered-job-board-gray.vercel.app/](https://ai-powered-job-board-gray.vercel.app/)
 - **Backend API documentation:** [https://ai-powered-job-board-twyn.onrender.com/docs](https://ai-powered-job-board-twyn.onrender.com/docs)
-- **Explanation video:** 
+- **Explanation video:** [https://drive.google.com/drive/folders/1dvQ6pHlwiQYkiUkqoW_MAT1SY0CfqtU5?usp=sharing](https://drive.google.com/drive/folders/1dvQ6pHlwiQYkiUkqoW_MAT1SY0CfqtU5?usp=sharing)
 
 An AI-powered job board built with React, FastAPI, Supabase Postgres, and Gemini. It processes the supplied multi-platform job dataset, removes duplicate listings, supports filtered discovery, analyzes uploaded resumes, recommends relevant jobs, and provides a Gemini-powered job assistant.
 
@@ -129,7 +129,7 @@ This makes each recommendation explainable through its displayed matched skills,
 
 - [x] Add the deployed prototype URL.
 - [x] Add the deployed API documentation URL.
-- [x] Replace the explanation video URL above.
+- [x] Add the explanation video URL.
 - [x] Verify the GitHub repository is public.
 - [x] Verify the video is accessible to anyone with the link.
 - [x] Verify no secrets, local SQLite databases, or raw dataset are committed.
