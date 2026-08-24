@@ -1,0 +1,1 @@
+export const mockResumeSkills = ['Python', 'SQL', 'React']

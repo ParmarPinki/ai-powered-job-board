@@ -1,0 +1,9 @@
+backend/data/*.db
+data/jobs.json
+backend/__pycache__/
+backend/services/__pycache__/
+backend/venv/
+frontend/node_modules/
+frontend/dist/
+.env
+.env.*
